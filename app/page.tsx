@@ -6,6 +6,43 @@ type Score = {
   score: number;
 };
 
+type ScoreResponse = {
+  topResults: { userName: string; score: number }[];
+  bottomResults: { userName: string; score: number }[];
+};
+
+type RankingSectionProps = {
+  title: string;
+  scores: Score[];
+  currentUserName: string;
+};
+
+const RankingSection = ({ title, scores, currentUserName }: RankingSectionProps) => (
+  <div className="mt-8">
+    <h3 className="text-2xl font-bold mb-4 text-red-600">{title}</h3>
+    {scores.length === 0 ? (
+      <div className="flex flex-col items-center justify-center py-8">
+        <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4 text-red-500 animate-pulse">Loading scores...</p>
+      </div>
+    ) : (
+      <div className="space-y-4">
+        {scores.map((score, index) => (
+          <div
+            key={index}
+            className="flex justify-between items-center p-3 bg-black/30 border border-red-900/50 rounded"
+          >
+            <span className={`text-lg ${score.userName === currentUserName ? "text-red-500" : ""}`}>
+              {index + 1}.{score.userName}
+            </span>
+            <span className="text-red-500">{score.score}</span>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+);
+
 export default function Home() {
   const questions = [
     { question: "React", image: "/monster1.jpg" },
@@ -23,7 +60,8 @@ export default function Home() {
   const [startTime, setStartTime] = useState(0);
   const [totalTime, setTotalTime] = useState(0);
   const [score, setScore] = useState(0);
-  const [scores, setScores] = useState<Score[]>([]);
+  const [topScores, setTopScores] = useState<Score[]>([]);
+  const [bottomScores, setBottomScores] = useState<Score[]>([]);
   const bgmRef = useRef<HTMLAudioElement | null>(null);
   const shotSoundRef = useRef<HTMLAudioElement | null>(null);
 
@@ -65,9 +103,17 @@ export default function Home() {
   };
 
   const fetchScores = async () => {
-    const res = await fetch("/api/result");
-    const data = await res.json();
-    return data.results;
+    try {
+      const response = await fetch('/api/result');
+      if (!response.ok) {
+        throw new Error('Failed to fetch scores');
+      }
+      const data = await response.json() as ScoreResponse;
+      setTopScores(data.topResults);
+      setBottomScores(data.bottomResults);
+    } catch (error) {
+      console.error('Error fetching scores:', error);
+    }
   };
 
   useEffect(() => {
@@ -92,8 +138,7 @@ export default function Home() {
           setScore(score);
           setIsCompleted(true);
 
-          const scores = await fetchScores();
-          setScores(scores);
+          await fetchScores();
         } else {
           if (shotSoundRef.current) {
             shotSoundRef.current.currentTime = 0;
@@ -181,34 +226,17 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="mt-8">
-            <h3 className="text-2xl font-bold mb-4 text-red-600">Ranking</h3>
-            {scores.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8">
-                <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-                <p className="mt-4 text-red-500 animate-pulse">
-                  Loading scores...
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {scores.map((score, index) => (
-                  <div
-                    key={index}
-                    className="flex justify-between items-center p-3 bg-black/30 border border-red-900/50 rounded"
-                  >
-                    <span
-                      className={`text-lg ${
-                        score.userName === userName ? "text-red-500" : ""
-                      }`}
-                    >
-                      {index + 1}.{score.userName}
-                    </span>
-                    <span className="text-red-500">{score.score}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <RankingSection
+              title="Top Ranking"
+              scores={topScores}
+              currentUserName={userName}
+            />
+            <RankingSection
+              title="Bottom Ranking"
+              scores={bottomScores}
+              currentUserName={userName}
+            />
           </div>
         </div>
       </main>
