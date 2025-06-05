@@ -86,5 +86,11 @@ app.get("/result", async (c) => {
     }
 });
 
+// Next.js用のエクスポート
 export const GET = handle(app);
 export const POST = handle(app);
+
+// Cloudflare Workers用のエクスポート
+export default {
+    fetch: app.fetch,
+};

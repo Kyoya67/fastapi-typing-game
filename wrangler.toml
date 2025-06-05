@@ -1,0 +1,7 @@
+name = "typing-game"
+main = "app/api/[[...route]]/route.ts"
+compatibility_date = "2024-01-01"
+
+[vars]
+UPSTASH_REDIS_REST_URL = ""
+UPSTASH_REDIS_REST_TOKEN = ""
