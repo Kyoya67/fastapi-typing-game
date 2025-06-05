@@ -1,5 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { StartScreen } from "./components/StartScreen";
+import { GameScreen } from "./components/GameScreen";
+import { ResultScreen } from "./components/ResultScreen";
 
 type Score = {
   userName: string;
@@ -7,41 +10,9 @@ type Score = {
 };
 
 type ScoreResponse = {
-  topResults: { userName: string; score: number }[];
-  bottomResults: { userName: string; score: number }[];
+  topResults: Score[];
+  bottomResults: Score[];
 };
-
-type RankingSectionProps = {
-  title: string;
-  scores: Score[];
-  currentUserName: string;
-};
-
-const RankingSection = ({ title, scores, currentUserName }: RankingSectionProps) => (
-  <div className="mt-8">
-    <h3 className="text-2xl font-bold mb-4 text-red-600">{title}</h3>
-    {scores.length === 0 ? (
-      <div className="flex flex-col items-center justify-center py-8">
-        <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-4 text-red-500 animate-pulse">Loading scores...</p>
-      </div>
-    ) : (
-      <div className="space-y-4">
-        {scores.map((score, index) => (
-          <div
-            key={index}
-            className="flex justify-between items-center p-3 bg-black/30 border border-red-900/50 rounded"
-          >
-            <span className={`text-lg ${score.userName === currentUserName ? "text-red-500" : ""}`}>
-              {index + 1}.{score.userName}
-            </span>
-            <span className="text-red-500">{score.score}</span>
-          </div>
-        ))}
-      </div>
-    )}
-  </div>
-);
 
 export default function Home() {
   const questions = [
@@ -156,7 +127,7 @@ export default function Home() {
 
   const handleStart = () => {
     if (!userName) {
-      alert("名前を入力してください");
+      alert("名前を入力してください");
       return;
     }
 
@@ -165,125 +136,27 @@ export default function Home() {
   };
 
   if (!isStarted) {
-    return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-black">
-        <div className="text-center p-8 bg-black/50 rounded-lg border border-red-800 shadow-2xl">
-          <h1
-            className="text-5xl font-bold mb-8 text-red-600 tracking-wider"
-            style={{ textShadow: "0 0 10px rgba(255, 0, 0, 0.7)" }}
-          >
-            Typing Game
-          </h1>
-          <div className="mb-6">
-            <input
-              type="text"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-              placeholder="Enter your name..."
-              className="w-64 p-3 text-lg bg-black/70 text-red-500 border-2 border-red-800 rounded-md 
-                       placeholder:text-red-700 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-              style={{ textShadow: "0 0 5px rgba(255, 0, 0, 0.5)" }}
-            />
-          </div>
-          <div>
-            <button
-              onClick={handleStart}
-              className="px-8 py-3 text-xl bg-red-900 text-white rounded-md hover:bg-red-700 
-                       transition-colors duration-300 border border-red-600"
-              style={{ textShadow: "2px 2px 4px rgba(0, 0, 0, 0.5)" }}
-            >
-              Start Game
-            </button>
-          </div>
-        </div>
-      </main>
-    );
+    return <StartScreen userName={userName} setUserName={setUserName} handleStart={handleStart} />;
   }
 
   if (isCompleted) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-black text-white">
-        <div className="text-center p-8 bg-black/50 rounded-lg border border-red-800 shadow-2xl max-w-2xl w-full">
-          <h2
-            className="text-4xl font-bold mb-6 text-red-600"
-            style={{ textShadow: "0 0 10px rgba(255, 0, 0, 0.7)" }}
-          >
-            Result
-          </h2>
-          <div className="mb-8 space-y-2">
-            <p className="text-xl">
-              Player: <span className="text-red-500">{userName}</span>
-            </p>
-            <p className="text-xl">
-              Time:{" "}
-              <span className="text-red-500">
-                {(totalTime / 1000).toFixed(2)}
-              </span>{" "}
-              seconds
-            </p>
-            <p className="text-xl">
-              Score: <span className="text-red-500">{score}</span>
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <RankingSection
-              title="Top Ranking"
-              scores={topScores}
-              currentUserName={userName}
-            />
-            <RankingSection
-              title="Bottom Ranking"
-              scores={bottomScores}
-              currentUserName={userName}
-            />
-          </div>
-        </div>
-      </main>
+      <ResultScreen
+        userName={userName}
+        totalTime={totalTime}
+        score={score}
+        topScores={topScores}
+        bottomScores={bottomScores}
+      />
     );
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between">
-      <div
-        className="text-center w-full h-screen bg-cover bg-center flex flex-col items-center justify-center"
-        style={{
-          backgroundImage: `url(${questions[currentQuestionIndex].image})`,
-          backgroundColor: "rgba(0, 0, 0, 0.7)",
-          backgroundBlendMode: "overlay",
-        }}
-      >
-        <div className="text-white mb-8 text-xl">
-          問題 {currentQuestionIndex + 1} / {questions.length}
-        </div>
-        <div
-          style={{
-            fontSize: "48px",
-            margin: "20px 0",
-            textShadow: "2px 2px 4px rgba(0, 0, 0, 0.5)",
-            fontWeight: "bold",
-            letterSpacing: "2px",
-          }}
-          className="text-white"
-        >
-          {questions[currentQuestionIndex].question
-            .split("")
-            .map((char, index) => (
-              <span
-                key={index}
-                style={{
-                  color: index < currentPosition ? "#ff0000" : "white",
-                  textShadow:
-                    index < currentPosition
-                      ? "0 0 10px rgba(255, 0, 0, 0.7)"
-                      : "2px 2px 4px rgba(0, 0, 0, 0.5)",
-                }}
-              >
-                {char}
-              </span>
-            ))}
-        </div>
-      </div>
-    </main>
+    <GameScreen
+      currentQuestion={questions[currentQuestionIndex]}
+      currentPosition={currentPosition}
+      currentQuestionIndex={currentQuestionIndex}
+      totalQuestions={questions.length}
+    />
   );
 }
